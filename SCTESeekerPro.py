@@ -17,6 +17,7 @@ class block:
         self.application = ''
         self.opcode = 0
         self.machine = ''
+        self.errors = '\n\n-----Errors/Warnings-----\n'
 
 class superblock:
     def __init__(self):
@@ -24,6 +25,8 @@ class superblock:
         self.time = ''
         self.color = ''
         self.show = False
+        self.aa = False
+        self.delay = 100
 
 class Application(tk.Frame):
     def __init__(self,master=None):
@@ -238,6 +241,11 @@ class Application(tk.Frame):
             if self.filter:
                 val.show = False
             #self.expand(val,k)
+
+            # If AA and not enough delay...
+            if val.delay < 4 and val.aa:
+                val.color='red'
+                        
             self.buttons[k].append(tk.Button(self.scrollframe,text=val.time,
                             command=lambda b=val,k=k:self.expand(b,k),
                             bg=val.color))
@@ -264,7 +272,8 @@ class Application(tk.Frame):
                     self.buttons[k][j+1].grid(row=k,column=j+1)
                     self.infotext = 'Application: ' + sblock.application +\
                               '\n\nWorkstation: ' + sblock.machine +\
-                              '\n\nMessage: ' + sblock.message + '\n\n'
+                              '\n\nMessage: ' + sblock.message + sblock.errors \
+                              + '\n'
                     self.infobox.insert(tk.INSERT,self.infotext)
                     j += 1
         else:
@@ -299,7 +308,7 @@ class Application(tk.Frame):
     def displayinfo(self,sb):
         self.infotext = 'Application: ' + sb.application +\
                           '\n\nWorkstation: ' + sb.machine +\
-                          '\n\nMessage: ' + sb.message
+                          '\n\nMessage: ' + sb.message + sb.errors
         self.infobox.delete(1.0,tk.END)
         self.infobox.insert(tk.INSERT,self.infotext)
         
@@ -347,6 +356,11 @@ class Application(tk.Frame):
                 newblock.line = i
                 newblock.application = line[1]
                 newblock.machine = line[2]
+
+                # Check if Addressable Ad
+                if 'addauxelement' in newblock.message.lower():
+                    self.blockdict[time[0:5]].aa = True
+                    
                 # Opcodes
                 if 'op code 0' in newblock.message or \
                    'Opcode 0' in newblock.message:
@@ -365,13 +379,28 @@ class Application(tk.Frame):
                     newblock.color = 'red'
                     newblock.opcode = 3
                     self.blockdict[time[0:5]].color='red'
-                    newblock.message += '\n\nError: Bad Opcode'
+                    newblock.errors += '\nError: Bad Opcode'
                 else:
                     if 'ignored' in newblock.message.lower():
                         newblock.color = 'gray'
                         newblock.opcode = 0
                     else:
                         newblock.opcode = 1
+
+                # Check for Total Delay
+                place = newblock.message.lower().find('total delay')
+                if place != -1:
+                    newmsg = newblock.message[place:]
+                    self.blockdict[time[0:5]].delay = \
+                                            int(prog.findall(newmsg)[0][6:8])
+                    newblock.message += '\n\nDelay: ' + \
+                            str(self.blockdict[time[0:5]].delay) + ' seconds'
+
+                    if self.blockdict[time[0:5]].delay < 4:
+                        if newblock.color != 'red':
+                            newblock.color = 'yellow'
+                        newblock.errors += '\nWarning: Delay < 4 seconds'
+
                 # Key words
                 if 'ignor' in newblock.message.lower() and\
                    newblock.color == 'white':
@@ -380,22 +409,12 @@ class Application(tk.Frame):
                 elif 'fail' in newblock.message.lower():
                     newblock.color = 'red'
                     self.blockdict[time[0:5]].color='red'
-                    newblock.message += '\n\nError: Failed break.'
+                    newblock.errors += '\nError: Failed break.'
                 elif 'succeed' in newblock.message.lower():
                     newblock.color = 'green'
                     self.blockdict[time[0:5]].color='green'
 
-                # Check for Total Delay
-                place = newblock.message.lower().find('total delay')
-                if place != -1:
-                    newmsg = newblock.message[place:]
-                    delay = prog.findall(newmsg)[0]
-                    newblock.message += '\n\nDelay: ' + delay[6:8] + ' seconds'
 
-                    if int(delay[6:8]) < 4:
-                        newblock.message += '\n\nError: Delay < 4 seconds'
-                        self.blockdict[time[0:5]].color='red'
-                        newblock.color = 'red'
                         
                 self.blockdict[time[0:5]].blocklist.append(newblock)
 
