@@ -1,9 +1,10 @@
 -----SCTESeeker Notes-----
 
 
-Description: This application goes through a log file and gets the
-lines that include SCTE messages and their corresponding 
-break windows.
+Description: This application goes through a system log file, gets 
+the lines that include SCTE messages and their corresponding 
+break window, groups the messages by time, and presents the
+information in a GUI.
 
 
 Instructions:
@@ -23,11 +24,11 @@ Applying filters:
 
 
 Color coding:
-1. Green corresponds to opcode 1 and 2 messages that are not ignored
-2. Yellow corresponds to "TAKE initiated," "Take next sequence,"
-	and "AddAuxElements" messages
+1. Green corresponds to "success" messages
+2. Yellow corresponds to total delay < 4 seconds
 3. Red corresponds to opcode 3, 4, and 5 messages that are not
-	ignored
+	ignored, "fail" messages, and addressable ads that have
+	a delay < 4 seconds
 3. Gray corresponds to opcode 0 messages, ignored messages, and
 	miscellaneous messages
 
@@ -38,6 +39,4 @@ To search another log file, just choose the file and search again.
 Issues:
 - After a filter, the Quickview scrollbar does not reset to the top
 	or resize
-- Window size is fixed at 800x600 due to difficulties getting boxes to
-	automatically fit the window size
 - Time interval is limited to 2 hours due to large memory usage
