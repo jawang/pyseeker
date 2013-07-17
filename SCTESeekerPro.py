@@ -27,6 +27,7 @@ class superblock:
         self.show = False
         self.aa = False
         self.delay = 100
+        self.display = False
 
 class Application(tk.Frame):
     def __init__(self,master=None):
@@ -245,12 +246,19 @@ class Application(tk.Frame):
             # If AA and not enough delay...
             if val.delay < 4 and val.aa:
                 val.color='red'
-                        
-            self.buttons[k].append(tk.Button(self.scrollframe,text=val.time,
-                            command=lambda b=val,k=k:self.expand(b,k),
-                            bg=val.color))
-            self.buttons[k][0].grid(row=k,column=0)
-            k += 1
+
+            val.display = False
+            
+            for b in val.blocklist:
+                if b.display:
+                    val.display = True
+
+            if val.display:            
+                self.buttons[k].append(tk.Button(self.scrollframe,text=val.time,
+                                command=lambda b=val,k=k:self.expand(b,k),
+                                bg=val.color))
+                self.buttons[k][0].grid(row=k,column=0)
+                k += 1
         self.filter = False
 
         self.scrollframe.update_idletasks()
